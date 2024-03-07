@@ -20,36 +20,41 @@ const Data = () => {
         setShowInfosSalle1(!showInfosSalle1);
     };
 
-    useEffect(() => {
-        const fetchData = () => {
-            fetch('http://localhost:3001/mesures')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Erreur de requête');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const latestData = data[0]; // Prendre les données les plus récentes
-                    setTemperature(latestData.temperature);
-                    setHumidity(latestData.humidite);
-                    setDecibel(latestData.decibel);
-                    setQuality(latestData.qualite);
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la requête:', error);
-                });
-        };
+   useEffect(() => {
+    const fetchData = () => {
+        fetch('http://192.168.3.35:3001/mesures')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur de requête');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Trier les données par ID en ordre décroissant
+                data.sort((a, b) => b.id - a.id);
 
-        // Appeler fetchData au montage du composant
-        fetchData();
+                // Récupérer les données de la dernière entrée
+                const latestData = data[0];
+                console.log(latestData);
 
-        // Rafraîchir les données toutes les 5 minutes
-        const intervalId = setInterval(fetchData, 300);
+                // Mettre à jour les états avec les données de la dernière entrée
+                setTemperature(latestData.temperature);
+                setHumidity(latestData.humidite);
+                setDecibel(latestData.decibel);
+                setQuality(latestData.qualite);
+            })
+            .catch(error => {
+                console.error('Erreur lors de la requête:', error);
+            });
+    };
 
-        // Nettoyer l'intervalle lorsque le composant est démonté
-        return () => clearInterval(intervalId);
-    }, []);
+    // Appeler fetchData au montage et ensuite toutes les 30 secondes
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+
+    // Nettoyer l'intervalle lors du démontage
+    return () => clearInterval(interval);
+}, []);
 
     const getColor = (decibel) => {
         if (decibel < 50) {
